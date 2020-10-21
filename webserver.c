@@ -116,6 +116,13 @@ void * serve_single_request(void * connection_pointer){
             did_error = 1;
         }
     }
+
+    //consulted https://stackoverflow.com/questions/238603/how-can-i-get-a-files-size-in-c how to tell size of file
+    fseek(fd, 0L, SEEK_END);
+    file_size = ftell(fd);
+    rewind(fd);
+
+    printf("%d\n", file_size);
     
   
 
