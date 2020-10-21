@@ -60,6 +60,9 @@ int serving_requests = 1; //global variable for if the program should continue r
 //     sem_post(shared_data->queue_mutex);
 // }
 static char* error_string = "HTTP/1.1 500 Internal Server Error\r\n";
+static char* success_string = " 200 OK";
+static char* newline_string = "\r\n";
+
 
 static char* html_type = "text/html";
 static char* txt_type = "text/plain";
@@ -76,12 +79,14 @@ void * serve_single_request(void * connection_pointer){
     char * http_method;
     char * reasource;
     char * http_version;
+    char * http_type;
     char * delimit = " \t\r\n\v\f";
+    int connection_fd, did_error, file_size;
+    FILE * fd;
 
-    struct threadsafe_data * shared_data;
-    int word_size;
-    int connection_fd = *(int *)connection_pointer;
-    
+    did_error = 0;
+
+    connection_fd = *(int *)connection_pointer;
     free(connection_pointer);
 
     read(connection_fd, request_buffer, 1024);
@@ -89,8 +94,30 @@ void * serve_single_request(void * connection_pointer){
     http_method = strtok(request_buffer, delimit);
     reasource = strtok(NULL, delimit);
     http_version = strtok(NULL, delimit);
-    printf("%s %s %s \n", http_method, reasource, http_version);
 
+    //need to use http_method here
+
+    if (strlen(reasource) == 1){
+        fd = fopen("www/index.html" , "r");
+        if (fd == NULL) 
+            fd = fopen("www/index.htm", "r");
+        if (fd == NULL){
+            perror("Error on fopen");
+            did_error = 1;
+        }
+    }
+    else {
+        //this part overwrites http method
+        strncpy(request_buffer + 1, "www", 3); //todo: support post request
+        reasource = request_buffer + 1;
+        fd = fopen(reasource, "r");
+        if (fd == NULL){
+            perror("Error on fopen");
+            did_error = 1;
+        }
+    }
+    
+  
 
     
 
