@@ -59,19 +59,43 @@ int serving_requests = 1; //global variable for if the program should continue r
         
 //     sem_post(shared_data->queue_mutex);
 // }
+static char* error_string = "HTTP/1.1 500 Internal Server Error\r\n";
+
+static char* html_type = "text/html";
+static char* txt_type = "text/plain";
+static char* png_type = "image/png";
+static char* gif_type =  "image/gif";
+static char* jpg_type = "image/jpg";
+static char* css_type = "text/css";
+static char* js_type = "application/javascript";
+
 
 void * serve_single_request(void * connection_pointer){
-    char buffer[1024];
+    char request_buffer[1024];
+    char response_buffer[1024];
+    char * http_method;
+    char * reasource;
+    char * http_version;
+    char * delimit = " \t\r\n\v\f";
+
     struct threadsafe_data * shared_data;
+    int word_size;
     int connection_fd = *(int *)connection_pointer;
+    
     free(connection_pointer);
 
-    read(connection_fd, buffer, 1024);
-    printf("%s\n", buffer);
-    
-    send(connection_fd, SERVER_ERROR, strlen(SERVER_ERROR),0);
+    read(connection_fd, request_buffer, 1024);
 
-    //todo: parse http request for method, parameters, etc
+    http_method = strtok(request_buffer, delimit);
+    reasource = strtok(NULL, delimit);
+    http_version = strtok(NULL, delimit);
+    printf("%s %s %s \n", http_method, reasource, http_version);
+
+
+    
+
+    send(connection_fd, error_string, strlen(error_string),0);
+
     //todo: search file system for requested reasource
     //todo: serve http request response
     //todo: release socket connection
