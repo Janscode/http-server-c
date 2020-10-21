@@ -62,6 +62,8 @@ int serving_requests = 1; //global variable for if the program should continue r
 static char* error_string = "HTTP/1.1 500 Internal Server Error\r\n";
 static char* success_string = " 200 OK";
 static char* newline_string = "\r\n";
+static char* type_string = "Content-Type: ";
+static char* len_string = "Content-Length: ";
 
 
 static char* html_type = "text/html";
@@ -81,7 +83,8 @@ void * serve_single_request(void * connection_pointer){
     char * http_version;
     char * http_type;
     char * delimit = " \t\r\n\v\f";
-    int connection_fd, did_error, file_size;
+    char content_len[10]; //this will break if there are realllllly long files todo: malloc all memory that needs it
+    int connection_fd, did_error, file_size, bytes_copied;
     FILE * fd;
 
     did_error = 0;
@@ -114,25 +117,32 @@ void * serve_single_request(void * connection_pointer){
         if (fd == NULL){
             perror("Error on fopen");
             did_error = 1;
-        }
+        }   
     }
 
     //consulted https://stackoverflow.com/questions/238603/how-can-i-get-a-files-size-in-c how to tell size of file
     fseek(fd, 0L, SEEK_END);
     file_size = ftell(fd);
     rewind(fd);
+    sprintf(content_len, "%d", file_size);
 
-    printf("%d\n", file_size);
-    
-  
+    send(connection_fd, http_version, strlen(http_version), 0);
+    send(connection_fd, success_string, strlen(success_string), 0);
+    send(connection_fd, newline_string, strlen(newline_string), 0); 
+    send(connection_fd, len_string, strlen(len_string), 0);
+    send(connection_fd, content_len, strlen(content_len), 0);
+    send(connection_fd, newline_string, strlen(newline_string), 0);
+    send(connection_fd, type_string, strlen(type_string), 0);
+    send(connection_fd, html_type, strlen(html_type), 0);
+    send(connection_fd, newline_string, strlen(newline_string), 0);
+    send(connection_fd, newline_string, strlen(newline_string), 0);
 
-    
+    while((bytes_copied = fread(response_buffer, sizeof(char), 1028, fd))  > 0){
+        send(connection_fd, response_buffer, bytes_copied, 0);
+    }
 
-    send(connection_fd, error_string, strlen(error_string),0);
-
-    //todo: search file system for requested reasource
-    //todo: serve http request response
-    //todo: release socket connection
+   // send(connection_fd, error_string, strlen(error_string),0);
+    fclose(fd);
     close(connection_fd);
     return(NULL);
 }
