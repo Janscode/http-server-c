@@ -108,6 +108,7 @@ void * serve_single_request(void * connection_pointer){
             perror("Error on fopen");
             did_error = 1;
         }
+        http_type = html_type;
     }
     else {
         //this part overwrites http method
@@ -117,7 +118,31 @@ void * serve_single_request(void * connection_pointer){
         if (fd == NULL){
             perror("Error on fopen");
             did_error = 1;
-        }   
+        } 
+        else{
+            strtok(reasource, ".");
+            http_type = strtok(NULL, ".");
+            printf("%s\n", http_type);
+
+            if (strlen(http_type) == 4){
+                http_type = html_type;
+            }
+            else if (strlen(http_type) == 3){
+                if (!strncmp(http_type, "gif", 3))
+                    http_type = gif_type;
+                if (!strncmp(http_type, "jpg", 3))
+                    http_type = jpg_type;
+                if (!strncmp(http_type, "png", 3))
+                    http_type = png_type;
+                if (!strncmp(http_type, "txt", 3))
+                    http_type =  txt_type;
+                if (!strncmp(http_type, "css", 3))
+                    http_type = css_type;
+            }
+            else if (strlen(http_type) == 2){
+                http_type = js_type;
+            }
+        }
     }
 
     //consulted https://stackoverflow.com/questions/238603/how-can-i-get-a-files-size-in-c how to tell size of file
@@ -133,7 +158,7 @@ void * serve_single_request(void * connection_pointer){
     send(connection_fd, content_len, strlen(content_len), 0);
     send(connection_fd, newline_string, strlen(newline_string), 0);
     send(connection_fd, type_string, strlen(type_string), 0);
-    send(connection_fd, html_type, strlen(html_type), 0);
+    send(connection_fd, http_type, strlen(http_type), 0);
     send(connection_fd, newline_string, strlen(newline_string), 0);
     send(connection_fd, newline_string, strlen(newline_string), 0);
 
